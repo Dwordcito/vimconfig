@@ -33,8 +33,11 @@ call plug#begin('~/.vim/plugged')
     Plug 'ntpeters/vim-better-whitespace'
     Plug '907th/vim-auto-save'
     Plug 'mg979/vim-visual-multi', {'branch': 'master'}
-    Plug 'Valloric/YouCompleteMe'
+    "Plug 'Valloric/YouCompleteMe'
     Plug 'voldikss/vim-floaterm'
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'nvim-lua/completion-nvim'
+    Plug 'Yggdroot/indentLine'
 call plug#end()
 
 colorscheme codedark
@@ -45,7 +48,18 @@ let g:blamer_relative_time = 1
 let g:blamer_show_in_visual_modes = 1
 let g:blamer_show_in_insert_modes = 1
 let g:blamer_relative_time = 1
-let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py'
+"let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py'
+:set list lcs=tab:\|\ 
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+set completeopt=menuone,noinsert
+let g:completion_matching_strategy_list = ['exact','substring','fuzzy']
+
+lua << EOF
+require'lspconfig'.clangd.setup{on_attach=require'completion'.on_attach}
+require'lspconfig'.cmake.setup{}
+EOF
 
 nnoremap <silent>ff <cmd>Telescope find_files<cr>
 nnoremap <silent>fg <cmd>Telescope live_grep<cr>
@@ -78,10 +92,14 @@ imap <Leader>ymd    <C-R>=strftime("%Y-%m-%d")<CR>
 imap <Leader>mdy    <C-R>=strftime("%m/%d/%y")<CR>
 imap <Leader>Mdy    <C-R>=strftime("%b %d, %Y")<CR>
 imap <Leader>hms    <C-R>=strftime("%T")<CR>
-nnoremap <silent> <Leader>gd :YcmCompleter GoTo<CR>
-nnoremap <silent> <Leader>gf :YcmCompleter FixIt<CR>
-nnoremap <silent> <Leader>gs :YcmCompleter GoToSymbol<CR>
-nnoremap <silent> <Leader>gr :YcmCompleter GoToReferences<CR>
+"nnoremap <silent> <Leader>gd :YcmCompleter GoTo<CR>
+"nnoremap <silent> <Leader>gf :YcmCompleter FixIt<CR>
+"nnoremap <silent> <Leader>gs :YcmCompleter GoToSymbol<CR>
+"nnoremap <silent> <Leader>gr :YcmCompleter GoToReferences<CR>
+nnoremap <silent> <Leader>gD <cmd>lua vim.lsp.buf.declaration()<CR>
+nnoremap <silent> <Leader>gd <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <Leader>gi <cmd>lua vim.lsp.buf.implementation()<CR>
+nnoremap <silent> <Leader>gr <cmd>lua vim.lsp.buf.references()<CR>
 
 nnoremap <silent> <F12> :FloatermToggle<CR>
 tnoremap <silent> <F12> <C-\><C-N>:FloatermToggle<CR>
@@ -92,4 +110,4 @@ tnoremap <silent> <F12> <C-\><C-N>:FloatermToggle<CR>
 "nmap <silent> gr <Plug>(coc-references)
 "inoremap <silent><expr> <c-space> coc#refresh()
 "inoremap <silent><expr> <c-@> coc#refresh()
-autocmd VimEnter * Tagbar
+"autocmd VimEnter * Tagbar
