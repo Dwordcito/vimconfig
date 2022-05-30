@@ -1,6 +1,7 @@
 "2021-08-31 02:59:00
 
 let g:airline_theme = 'codedark'
+
 set tabstop=4
 set softtabstop=4
 set shiftwidth=4
@@ -11,36 +12,45 @@ set hidden
 set nowrap
 set incsearch
 set noshowmode
-set colorcolumn=120
+set colorcolumn=80,120
 set signcolumn=yes
 set relativenumber
 set noswapfile
 set nobackup
-set background=dark
 set incsearch
 
 call plug#begin('~/.vim/plugged')
     Plug 'nvim-lua/popup.nvim'
     Plug 'nvim-lua/plenary.nvim'
-    "Plug 'neoclide/coc.nvim', {'branch': 'release'}
     Plug 'nvim-telescope/telescope.nvim'
     Plug 'vim-airline/vim-airline'
+    Plug 'tomasiser/vim-code-dark'
     Plug 'apzelos/blamer.nvim'
     Plug 'tpope/vim-fugitive'
-    Plug 'tomasiser/vim-code-dark'
     Plug 'majutsushi/tagbar'
     Plug 'preservim/nerdtree'
     Plug 'ntpeters/vim-better-whitespace'
     Plug '907th/vim-auto-save'
     Plug 'mg979/vim-visual-multi', {'branch': 'master'}
-    "Plug 'Valloric/YouCompleteMe'
     Plug 'voldikss/vim-floaterm'
-    Plug 'neovim/nvim-lspconfig'
-    Plug 'nvim-lua/completion-nvim'
     Plug 'Yggdroot/indentLine'
+    Plug 'williamboman/nvim-lsp-installer'
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'hrsh7th/cmp-nvim-lsp'
+    Plug 'hrsh7th/cmp-buffer'
+    Plug 'hrsh7th/nvim-cmp'
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    Plug 'nvim-treesitter/playground'
+    Plug 'github/copilot.vim'
+    " For vsnip user.
+    Plug 'hrsh7th/cmp-vsnip'
+    Plug 'hrsh7th/vim-vsnip'
+    " For plantuml.
+    Plug 'tyru/open-browser.vim'
+    Plug 'aklt/plantuml-syntax'
+    Plug 'weirongxu/plantuml-previewer.vim'
 call plug#end()
 
-colorscheme codedark
 let g:airline#extensions#tagbar#enabled = 1
 let g:blamer_enabled = 1
 let g:blamer_delay = 500
@@ -48,21 +58,106 @@ let g:blamer_relative_time = 1
 let g:blamer_show_in_visual_modes = 1
 let g:blamer_show_in_insert_modes = 1
 let g:blamer_relative_time = 1
-"let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py'
 :set list lcs=tab:\|\ 
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 
-set completeopt=menuone,noinsert
-let g:completion_matching_strategy_list = ['exact','substring','fuzzy']
-
+let g:floaterm_width = 0.9
+let g:floaterm_height = 0.9
 lua << EOF
-require'lspconfig'.clangd.setup{on_attach=require'completion'.on_attach}
-require'lspconfig'.cmake.setup{}
+require'lspconfig'.clangd.setup{}
+local servers = { 'clangd' }
+for _, lsp in pairs(servers) do
+  require('lspconfig')[lsp].setup {
+    on_attach = on_attach,
+    flags = {
+      debounce_text_changes = 150,
+    }
+  }
+end
 EOF
+
+set completeopt=menu,menuone
+
+lua <<EOF
+  -- Setup nvim-cmp.
+  local cmp = require'cmp'
+
+  cmp.setup({
+    snippet = {
+      expand = function(args)
+        --For `vsnip` user.
+        vim.fn["vsnip#anonymous"](args.body)
+
+        -- For `luasnip` user.
+        -- require('luasnip').lsp_expand(args.body)
+
+        -- For `ultisnips` user.
+        -- vim.fn["UltiSnips#Anon"](args.body)
+      end,
+    },
+    mapping = {
+      ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+      ['<C-f>'] = cmp.mapping.scroll_docs(4),
+      ['<C-Space>'] = cmp.mapping.complete(),
+      ['<C-e>'] = cmp.mapping.close(),
+      ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    },
+    sources = {
+      { name = 'nvim_lsp' },
+
+      -- For vsnip user.
+      { name = 'vsnip' },
+
+      -- For luasnip user.
+      -- { name = 'luasnip' },
+
+      -- For ultisnips user.
+      -- { name = 'ultisnips' },
+
+     { name = 'buffer' },
+    }
+  })
+
+  -- Setup lspconfig.
+  require('lspconfig').clangd.setup {
+    capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+  }
+EOF
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  highlight = {
+    enable = true,
+  },
+  indent = {
+    enable = true
+    },
+  playground = {
+        enable = true,
+        disable = {},
+        updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
+        persist_queries = false, -- Whether the query persists across vim sessions
+        keybindings = {
+          toggle_query_editor = 'o',
+          toggle_hl_groups = 'i',
+          toggle_injected_languages = 't',
+          toggle_anonymous_nodes = 'a',
+          toggle_language_display = 'I',
+          focus_language = 'f',
+          unfocus_language = 'F',
+          update = 'R',
+          goto_node = '<cr>',
+          show_help = '?',
+        },
+    }
+}
+EOF
+
 
 nnoremap <silent>ff <cmd>Telescope find_files<cr>
 nnoremap <silent>fg <cmd>Telescope live_grep<cr>
+nnoremap <silent>fl <cmd>lua require'telescope.builtin'.live_grep{ search_dirs={"%:p"} }<cr>
+
 nmap <S-Up> v<Up>
 nmap <S-Down> v<Down>
 nmap <S-Left> v<Left>
@@ -103,6 +198,8 @@ nnoremap <silent> <Leader>gr <cmd>lua vim.lsp.buf.references()<CR>
 
 nnoremap <silent> <F12> :FloatermToggle<CR>
 tnoremap <silent> <F12> <C-\><C-N>:FloatermToggle<CR>
+colorscheme codedark
+set termguicolors
 "nmap <silent> gD :call CocAction('jumpDeclaration')<CR>
 "nmap <silent> gd <Plug>(coc-definition)
 "nmap <silent> gy <Plug>(coc-type-definition)
