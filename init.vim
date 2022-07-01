@@ -49,7 +49,15 @@ call plug#begin('~/.vim/plugged')
     Plug 'tyru/open-browser.vim'
     Plug 'aklt/plantuml-syntax'
     Plug 'weirongxu/plantuml-previewer.vim'
+    " Vim-cpp-helper
+    Plug 'd86leader/vim-cpp-helper'
+
 call plug#end()
+
+let g:cpp_helper_header_extension = ".hpp"
+let g:cpp_helper_source_extension = ".cpp"
+let g:cpp_helper_inclusion_guard_flavour = 1
+let g:cpp_helper_inclusion_guard_format = "_%s_HPP"
 
 let g:airline#extensions#tagbar#enabled = 1
 let g:blamer_enabled = 1
@@ -195,6 +203,8 @@ nnoremap <silent> <Leader>gD <cmd>lua vim.lsp.buf.declaration()<CR>
 nnoremap <silent> <Leader>gd <cmd>lua vim.lsp.buf.definition()<CR>
 nnoremap <silent> <Leader>gi <cmd>lua vim.lsp.buf.implementation()<CR>
 nnoremap <silent> <Leader>gr <cmd>lua vim.lsp.buf.references()<CR>
+nnoremap <silent> <Leader>ca <cmd>lua vim.lsp.buf.code_action()<CR>
+nnoremap <silent> <Leader>gn <cmd>lua vim.lsp.diagnostic.goto_next()<CR>
 
 nnoremap <silent> <F12> :FloatermToggle<CR>
 tnoremap <silent> <F12> <C-\><C-N>:FloatermToggle<CR>
